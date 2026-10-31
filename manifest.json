@@ -1,0 +1,17 @@
+{
+  "name": "めっちゃマーライオン",
+  "short_name": "マーライオン",
+  "description": "酔いは、遅れてやってくる。飲み会の記録と練習のためのゲーム",
+  "lang": "ja",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a1024",
+  "theme_color": "#1a1024",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

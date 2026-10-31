@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>めっちゃマーライオン</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a1024">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="マーライオン">
+</head>
+<body>
+  <div id="app">
+
+    <!-- ===== タイトル画面(居酒屋の店内) ===== -->
+    <section class="screen" data-screen="title">
+      <canvas id="titleCanvas" width="240" height="260"></canvas>
+      <h1 class="title-logo">めっちゃマーライオン</h1>
+      <p class="title-copy">酔いは、遅れてやってくる。</p>
+      <button id="startBtn" class="primary-btn">入店する</button>
+    </section>
+
+    <!-- ===== ユーザー選択画面 ===== -->
+    <section class="screen" data-screen="user" hidden>
+      <h2 class="section-title">プレイヤーを選ぶ</h2>
+      <div id="userList" class="user-list"></div>
+      <div class="user-new">
+        <input id="newUserName" type="text" placeholder="新しい名前を入力" maxlength="12">
+        <button id="createUserBtn" class="primary-btn small">登録してはじめる</button>
+      </div>
+    </section>
+
+    <!-- ===== モード選択画面 ===== -->
+    <section class="screen" data-screen="mode" hidden>
+      <h2 class="section-title">ようこそ、<span id="currentUserName"></span>さん</h2>
+      <button id="switchUserBtn" class="link-btn">別のプレイヤーに切り替える</button>
+      <div class="mode-choices">
+        <button id="modeScoreBtn" class="mode-btn">
+          <strong>スコアアタック</strong>
+          <span>安全にたくさん飲んでハイスコアを狙う</span>
+        </button>
+        <button id="modePracticeBtn" class="mode-btn">
+          <strong>練習モード</strong>
+          <span>自分の酔いの特性を記録・可視化する</span>
+        </button>
+        <button id="modeRecordBtn" class="mode-btn">
+          <strong>記録モード</strong>
+          <span>実際の飲み会で、飲むのに合わせて記録する</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ===== 記録モード: 開始画面 ===== -->
+    <section class="screen" data-screen="recordStart" hidden>
+      <h2 class="section-title">記録モード</h2>
+      <div id="recPending" class="rec-notice" hidden></div>
+      <button id="recResumeBtn" class="primary-btn" hidden>続きから再開する</button>
+      <div class="rec-form">
+        <label>体重(任意)<input id="recWeight" type="number" min="20" max="200" step="1" inputmode="numeric" placeholder="例: 60"> kg</label>
+        <label>一言メモ(任意)<input id="recMemo" type="text" maxlength="40" placeholder="例: 会社の飲み会"></label>
+        <label>長押しで減る速さ<input id="recSpeed" type="number" min="5" max="50" step="1" inputmode="numeric"> ml/秒</label>
+      </div>
+      <button id="recStartBtn" class="primary-btn">飲み会をはじめる</button>
+      <p class="rec-note">飲んでいる間だけ、届いた器を長押ししてください。画面の残量を手元のグラスに合わせるように押します。推定と提案は目安であり、医学的な診断ではありません。</p>
+      <div class="rec-links">
+        <button id="recListBtn" class="link-btn">記録の一覧</button>
+        <button id="recBackBtn" class="link-btn">モード選択に戻る</button>
+      </div>
+    </section>
+
+    <!-- ===== 記録モード: 記録画面 ===== -->
+    <section class="screen" data-screen="record" hidden>
+      <div class="hud">
+        <div class="hud-item">経過<br><span id="recElapsed">0:00</span></div>
+        <div class="hud-item">純アルコール<br><span id="recGrams">0g</span></div>
+        <div class="hud-item">直近30分<br><span id="recPace">0g</span></div>
+      </div>
+      <div id="recSuggest" class="rec-suggest" hidden></div>
+      <canvas id="recordCanvas" width="240" height="230"></canvas>
+      <div id="recCheckin" class="rec-checkin" hidden>
+        <span>今の酔いは?</span>
+        <div class="rec-checkin-btns">
+          <button data-level="0">0 しらふ</button>
+          <button data-level="1">1</button>
+          <button data-level="2">2</button>
+          <button data-level="3">3</button>
+          <button data-level="4">4 かなり</button>
+        </div>
+      </div>
+      <div id="recToast" class="toast"></div>
+      <div class="game-actions rec-actions">
+        <button id="recUndoBtn" class="stop-btn">ひと押し戻す</button>
+        <button id="recEndBtn" class="stop-btn">今日はここまで</button>
+      </div>
+
+      <!-- お品書き(記録モードはマイドリンクも並ぶので、スクロールできる一覧にする) -->
+      <div id="recMenu" class="rec-menu" hidden>
+        <div class="rec-menu-panel">
+          <h3>お品書き</h3>
+          <div id="recMenuList" class="rec-menu-list"></div>
+          <details class="rec-custom">
+            <summary>マイドリンクを追加</summary>
+            <label>名前<input id="cdName" type="text" maxlength="20" placeholder="例: 〇〇屋のハイボール"></label>
+            <label>度数<input id="cdAbv" type="number" min="0" max="96" step="0.5" inputmode="decimal"> %</label>
+            <label>量<input id="cdMl" type="number" min="10" max="2000" step="10" inputmode="numeric"> ml</label>
+            <label>器<select id="cdVessel">
+              <option value="beer">ジョッキ</option>
+              <option value="water">グラス</option>
+              <option value="shochu">ロックグラス</option>
+              <option value="wine">ワイングラス</option>
+              <option value="sake">枡</option>
+              <option value="chuhai">背の高いグラス</option>
+            </select></label>
+            <div id="cdPreview" class="rec-note"></div>
+            <button id="cdSaveBtn" class="primary-btn small">登録して注文</button>
+          </details>
+          <button id="recMenuClose" class="link-btn">閉じる</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 記録モード: 終わり方 ===== -->
+    <section class="screen" data-screen="recordEnd" hidden>
+      <h2 class="section-title">今日の終わり方は?</h2>
+      <div class="mode-choices" id="recOutcomeBtns">
+        <button class="mode-btn" data-outcome="stopped"><strong>自分で切り上げた</strong><span>気持ち悪くならずに帰れた</span></button>
+        <button class="mode-btn" data-outcome="sick"><strong>気持ち悪くなった</strong><span>吐くまではいかないが、飲みすぎた</span></button>
+        <button class="mode-btn" data-outcome="mareLion"><strong>マーライオンになった</strong><span>吐いた</span></button>
+        <button class="mode-btn" data-outcome="unknown"><strong>覚えていない</strong><span>終わり方を思い出せない</span></button>
+      </div>
+      <button id="recOutcomeLater" class="link-btn">あとで入力する(翌朝など)</button>
+    </section>
+
+    <!-- ===== 記録モード: 振り返り ===== -->
+    <section class="screen" data-screen="recordReview" hidden>
+      <h2 id="recReviewTitle" class="result-title">今日の記録</h2>
+      <canvas id="recReviewChart" width="240" height="130"></canvas>
+      <div id="recReviewBody" class="result-body"></div>
+      <div class="rec-links">
+        <button id="recReviewListBtn" class="link-btn">記録の一覧</button>
+        <button id="recReviewBackBtn" class="link-btn">モード選択に戻る</button>
+      </div>
+    </section>
+
+    <!-- ===== 記録モード: 記録の一覧 ===== -->
+    <section class="screen" data-screen="recordList" hidden>
+      <h2 class="section-title">記録の一覧</h2>
+      <div id="recProfile" class="result-body"></div>
+      <div id="recListBody" class="rec-list"></div>
+      <button id="recListBackBtn" class="link-btn">記録モードに戻る</button>
+    </section>
+
+    <!-- ===== ゲーム画面(居酒屋の中) ===== -->
+    <section class="screen" data-screen="game" hidden>
+      <div class="hud">
+        <div class="hud-item"><span id="hudLabel1">SCORE</span><br><span id="hudVal1">0</span></div>
+        <div class="hud-item">TIME<br><span id="timeVal">19:00</span></div>
+        <div class="hud-item"><span id="hudLabel3">BEST</span><br><span id="hudVal3">0</span></div>
+      </div>
+
+      <canvas id="gameCanvas" width="240" height="230"></canvas>
+
+      <div id="toast" class="toast"></div>
+      <p class="hint">卓上の注文表をタップして1杯頼み、届いた器を長押しして飲む。押し続けるほど速くなる</p>
+
+      <div class="game-actions">
+        <button id="stopBtn" class="stop-btn">今日はここまで</button>
+      </div>
+    </section>
+
+    <!-- ===== リザルト画面(スコアアタック) ===== -->
+    <section class="screen" data-screen="result" hidden>
+      <canvas id="resultCanvas" width="240" height="140"></canvas>
+      <h2 id="resultTitle" class="result-title"></h2>
+      <canvas id="resultChart" width="240" height="130"></canvas>
+      <div id="resultBody" class="result-body"></div>
+      <button id="retryBtn" class="primary-btn">もう一度飲みに行く</button>
+    </section>
+
+    <!-- ===== 特性レポート画面(練習モード) ===== -->
+    <section class="screen" data-screen="report" hidden>
+      <canvas id="reportCanvas" width="240" height="140"></canvas>
+      <h2 id="reportTitle" class="result-title"></h2>
+      <canvas id="reportChart" width="240" height="130"></canvas>
+      <div id="reportStats" class="result-body"></div>
+      <button id="reportRetryBtn" class="primary-btn">もう一度練習する</button>
+    </section>
+
+  </div>
+  <!-- 読み込む順番に意味がある(後のファイルは、前のファイルの定数や関数を使う) -->
+  <script src="js/config.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/results.js"></script>
+  <script src="js/render-scene.js"></script>
+  <script src="js/render-merlion.js"></script>
+  <script src="js/render-game.js"></script>
+  <script src="js/record.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // ホーム画面に追加して、オフラインでも開けるようにする(https で公開したときだけ有効)
+    if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>

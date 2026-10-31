@@ -1,0 +1,19 @@
+# OS が作るファイル
+.DS_Store
+Thumbs.db
+
+# エディタの個人設定・一時ファイル
+.vscode/
+.idea/
+*.swp
+
+# ゲームとは関係のない個人メモ
+test.txt
+
+# 企画書・計画書・資料(公開しない)
+docs/
+
+# 将来ツール(npm など)を入れたとき用
+node_modules/
+*.log
+.env
